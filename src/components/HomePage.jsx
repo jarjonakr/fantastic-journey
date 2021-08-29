@@ -1,22 +1,13 @@
 import React, { useState, useContext } from "react";
-import gql from "graphql-tag";
 import { useHistory } from "react-router-dom";
 import { useLazyQuery } from "@apollo/react-hooks";
 import { UserContext } from "../context/UserContext";
+import { GET_CHATROOM } from "../graphql/queries/chatroom";
 
 const DEFAULT_STATE = {
   username: "",
   entryCode: "",
 };
-
-const GET_CHATROOM = gql`
-  query FetchChatRoom($entryCode: String!) {
-    fetchChatRoom(entryCode: $entryCode) {
-      id
-      entryCode
-    }
-  }
-`;
 
 const HomePage = () => {
   const [entryInfo, setEntryInfo] = useState(DEFAULT_STATE);

@@ -1,58 +1,31 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import { UserContext } from "../context/UserContext";
-import gql from "graphql-tag";
+import { CREATE_MESSAGE } from "../graphql/mutations/messages";
+import { GET_MESSAGES } from "../graphql/queries/messages";
+import { GET_CHATROOM } from "../graphql/queries/chatroom";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
-
-const GET_MESSAGES = gql`
-  query FetchMessages {
-    fetchMessages {
-      id
-      body
-      chatRoomId
-      createdAt
-      username
-    }
-  }
-`;
-
-const CREATE_MESSAGE = gql`
-  mutation CreateMessage($params: MessageInput!) {
-    createMessage(input: { params: $params }) {
-      message {
-        id
-        body
-        chatRoomId
-        createdAt
-        username
-      }
-    }
-  }
-`;
-
-const AlwaysScrollToBottom = () => {
-  const elementRef = useRef();
-  useEffect(() => elementRef.current.scrollIntoView());
-  return <div ref={elementRef} />;
-};
+import ScrollToBottom from "./ScrollToBottom";
 
 const ChatPage = () => {
   const [message, setMessage] = useState("");
   const { username } = useContext(UserContext);
-  const { data, loading, error } = useQuery(GET_MESSAGES);
   const { entryCode } = useParams();
 
-  console.log({ entryCode });
+  const { data, loading, error } = useQuery(GET_MESSAGES, {
+    variables: { entryCode },
+  });
 
-  // get chatroom id from another query
-  const roomId = 1;
+  const { data: chatRoomData } = useQuery(GET_CHATROOM, {
+    variables: { entryCode },
+  });
 
-  console.log("username", username);
+  const chatRoomId = chatRoomData && chatRoomData.fetchChatRoom.id;
 
   const params = {
-    chatRoomId: roomId,
+    chatRoomId,
     body: message,
     username,
   };
@@ -61,6 +34,7 @@ const ChatPage = () => {
     variables: { params },
     refetchQueries: [GET_MESSAGES, "GetMesssages"],
     onCompleted: (newMessage) => {
+      // do something socket related ? or is that handled in the api
       console.log("we have data?", newMessage);
     },
   });
@@ -68,7 +42,7 @@ const ChatPage = () => {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error</p>;
 
-  const { fetchMessages: messages } = data;
+  const { fetchChatRoomMessages: messages } = data;
 
   return (
     <div className="h-100 container w-50">
@@ -81,7 +55,7 @@ const ChatPage = () => {
             createdAt={createdAt}
           />
         ))}
-        <AlwaysScrollToBottom />
+        <ScrollToBottom />
       </div>
       <MessageInput
         message={message}
