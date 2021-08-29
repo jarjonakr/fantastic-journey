@@ -1,5 +1,7 @@
 import React, { useState, useContext } from "react";
+import gql from "graphql-tag";
 import { useHistory } from "react-router-dom";
+import { useLazyQuery } from "@apollo/react-hooks";
 import { UserContext } from "../context/UserContext";
 
 const DEFAULT_STATE = {
@@ -7,34 +9,57 @@ const DEFAULT_STATE = {
   entryCode: "",
 };
 
+const GET_CHATROOM = gql`
+  query FetchChatRoom($entryCode: String!) {
+    fetchChatRoom(entryCode: $entryCode) {
+      id
+      entryCode
+    }
+  }
+`;
+
 const HomePage = () => {
-  const [data, setData] = useState(DEFAULT_STATE);
+  const [entryInfo, setEntryInfo] = useState(DEFAULT_STATE);
   const { setUsername } = useContext(UserContext);
   const history = useHistory();
 
-  const setState = (field, value) => {
-    setData((prevData) => ({ ...prevData, [field]: value }));
+  const [getChatroom, { error }] = useLazyQuery(GET_CHATROOM, {
+    onCompleted: ({ fetchChatRoom }) => {
+      setUsername(entryInfo.username);
+      history.push(`chat/${fetchChatRoom.entryCode}`);
+    },
+  });
+
+  const handleChange = (field, value) => {
+    setEntryInfo((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = () => {
+    getChatroom({ variables: { entryCode: entryInfo.entryCode } });
   };
 
   return (
     <div className="d-flex align-items-center justify-content-center container w-25 h-100">
-      <form
-        onSubmit={() => {
-          console.log("yooo whats uyp", data);
-          setUsername(data.username);
-          history.push(`chat/${data.entryCode}`);
-        }}
-        className="d-flex flex-column"
-      >
+      <form className="d-flex flex-column">
         <label>username</label>
         <input
-          onChange={({ target: { value } }) => setState("username", value)}
+          onChange={({ target: { value } }) => handleChange("username", value)}
+          placeholder="anon"
         />
         <label className="mt-2">chat room id</label>
         <input
-          onChange={({ target: { value } }) => setState("entryCode", value)}
+          onChange={({ target: { value } }) => handleChange("entryCode", value)}
         />
-        <button className="mt-4" type="submit">
+        {error && <label className="text-danger">incorrect chat room id</label>}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            console.log("clicking");
+            handleSubmit();
+          }}
+          className="mt-4"
+          type="submit"
+        >
           submit
         </button>
       </form>

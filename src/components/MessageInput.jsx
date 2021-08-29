@@ -17,7 +17,7 @@ const MessageInput = ({ message, setMessage, createMessage }) => {
         variant="outline-secondary"
         type="submit"
         disabled={!message.length}
-        onClick={() => {
+        onClick={(e) => {
           createMessage();
           setMessage("");
         }}

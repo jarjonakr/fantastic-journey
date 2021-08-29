@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
+import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import { UserContext } from "../context/UserContext";
 import gql from "graphql-tag";
@@ -31,10 +32,19 @@ const CREATE_MESSAGE = gql`
   }
 `;
 
+const AlwaysScrollToBottom = () => {
+  const elementRef = useRef();
+  useEffect(() => elementRef.current.scrollIntoView());
+  return <div ref={elementRef} />;
+};
+
 const ChatPage = () => {
   const [message, setMessage] = useState("");
   const { username } = useContext(UserContext);
   const { data, loading, error } = useQuery(GET_MESSAGES);
+  const { entryCode } = useParams();
+
+  console.log({ entryCode });
 
   // get chatroom id from another query
   const roomId = 1;
@@ -49,16 +59,11 @@ const ChatPage = () => {
 
   const [createMessage] = useMutation(CREATE_MESSAGE, {
     variables: { params },
+    refetchQueries: [GET_MESSAGES, "GetMesssages"],
     onCompleted: (newMessage) => {
       console.log("we have data?", newMessage);
     },
   });
-
-  const AlwaysScrollToBottom = () => {
-    const elementRef = useRef();
-    useEffect(() => elementRef.current.scrollIntoView());
-    return <div ref={elementRef} />;
-  };
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error</p>;
