@@ -1,10 +1,11 @@
 import React, { useState, useContext } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/react-hooks";
+import { useQuery, useMutation, useSubscription } from "@apollo/react-hooks";
 import { UserContext } from "../context/UserContext";
 import { CREATE_MESSAGE } from "../graphql/mutations/messages";
 import { GET_MESSAGES } from "../graphql/queries/messages";
 import { GET_CHATROOM } from "../graphql/queries/chatroom";
+import { MESSAGE_SUBSCRIPTION } from "../graphql/queries/subscription";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
 import ScrollToBottom from "./ScrollToBottom";
@@ -23,6 +24,12 @@ const ChatPage = () => {
   });
 
   const chatRoomId = chatRoomData && chatRoomData.fetchChatRoom.id;
+
+  const { data: subData } = useSubscription(MESSAGE_SUBSCRIPTION, {
+    variables: { roomId: chatRoomId },
+  });
+
+  console.log("PLX GOD SUB DATA", subData);
 
   const params = {
     chatRoomId,

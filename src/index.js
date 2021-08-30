@@ -9,10 +9,9 @@ import {
 } from "@apollo/client";
 import * as ActionCable from "@rails/actioncable";
 import ActionCableLink from "graphql-ruby-client/subscriptions/ActionCableLink";
-
-import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
+import "./index.css";
 import "bootstrap/dist/css/bootstrap.css";
 
 const cable = ActionCable.createConsumer("ws://localhost:3000/cable");
