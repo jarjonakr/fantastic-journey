@@ -7,6 +7,7 @@ import {
   HttpLink,
   InMemoryCache,
 } from "@apollo/client";
+import { getMainDefinition } from "@apollo/client/utilities";
 import * as ActionCable from "@rails/actioncable";
 import ActionCableLink from "graphql-ruby-client/subscriptions/ActionCableLink";
 import App from "./App";
@@ -18,19 +19,25 @@ const cable = ActionCable.createConsumer("ws://localhost:3000/cable");
 
 const cache = new InMemoryCache();
 
-const hasSubscriptionOperation = ({ query: { definitions } }) => {
-  return definitions.some(
-    ({ kind, operation }) =>
-      kind === "OperationDefinition" && operation === "subscription"
-  );
-};
+// const hasSubscriptionOperation = ({ query: { definitions } }) => {
+//   return definitions.some(
+//     ({ kind, operation }) =>
+//       kind === "OperationDefinition" && operation === "subscription"
+//   );
+// };
 
 const httpLink = new HttpLink({
   uri: "http://localhost:3000/graphql",
 });
 
 const link = ApolloLink.split(
-  hasSubscriptionOperation,
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === "OperationDefinition" &&
+      definition.operation === "subscription"
+    );
+  },
   new ActionCableLink({ cable }),
   httpLink
 );

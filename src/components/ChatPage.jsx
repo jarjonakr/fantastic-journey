@@ -1,6 +1,7 @@
-import React, { useState, useContext } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery, useMutation, useSubscription } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import { UserContext } from "../context/UserContext";
 import { CREATE_MESSAGE } from "../graphql/mutations/messages";
 import { GET_MESSAGES } from "../graphql/queries/messages";
@@ -15,7 +16,7 @@ const ChatPage = () => {
   const { username } = useContext(UserContext);
   const { entryCode } = useParams();
 
-  const { data, loading, error } = useQuery(GET_MESSAGES, {
+  const { subscribeToMore, data, loading, error } = useQuery(GET_MESSAGES, {
     variables: { entryCode },
   });
 
@@ -25,11 +26,23 @@ const ChatPage = () => {
 
   const chatRoomId = chatRoomData && chatRoomData.fetchChatRoom.id;
 
-  const { data: subData } = useSubscription(MESSAGE_SUBSCRIPTION, {
-    variables: { roomId: chatRoomId },
-  });
+  useEffect(() => {
+    const unsubscribe = subscribeToMore({
+      document: MESSAGE_SUBSCRIPTION,
+      variables: { chatRoomId },
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev;
+        const newMessage = subscriptionData.data.messageAddedToRoom;
+        if (newMessage && prev) {
+          return Object.assign({}, prev, {
+            fetchChatRoomMessages: [...prev.fetchChatRoomMessages, newMessage],
+          });
+        }
+      },
+    });
 
-  console.log("PLX GOD SUB DATA", subData);
+    return () => unsubscribe();
+  }, [chatRoomId]);
 
   const params = {
     chatRoomId,
@@ -39,11 +52,7 @@ const ChatPage = () => {
 
   const [createMessage] = useMutation(CREATE_MESSAGE, {
     variables: { params },
-    refetchQueries: [GET_MESSAGES, "GetMesssages"],
-    onCompleted: (newMessage) => {
-      // do something socket related ? or is that handled in the api
-      console.log("we have data?", newMessage);
-    },
+    refetchQueries: [GET_MESSAGES],
   });
 
   if (loading) return <p>Loading...</p>;
