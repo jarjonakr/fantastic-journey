@@ -11,23 +11,16 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import * as ActionCable from "@rails/actioncable";
 import ActionCableLink from "graphql-ruby-client/subscriptions/ActionCableLink";
 import App from "./App";
-import reportWebVitals from "./reportWebVitals";
 import "./index.css";
+import env from "./environment";
 import "bootstrap/dist/css/bootstrap.css";
 
-const cable = ActionCable.createConsumer("ws://localhost:3000/cable");
+const cable = ActionCable.createConsumer(env.WS_BASE_URL);
 
 const cache = new InMemoryCache();
 
-// const hasSubscriptionOperation = ({ query: { definitions } }) => {
-//   return definitions.some(
-//     ({ kind, operation }) =>
-//       kind === "OperationDefinition" && operation === "subscription"
-//   );
-// };
-
 const httpLink = new HttpLink({
-  uri: "http://localhost:3000/graphql",
+  uri: env.API_GQL_URL,
 });
 
 const link = ApolloLink.split(
@@ -55,8 +48,3 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById("root")
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
